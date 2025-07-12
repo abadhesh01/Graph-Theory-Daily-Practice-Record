@@ -1,0 +1,96 @@
+
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+record SimpleGraph(Map<Integer, List<Integer>> adjacentList, int numberOfNodes) {
+
+  public SimpleGraph(int numberOfNodes) {
+    this(new HashMap<>(), numberOfNodes);
+    for (int node = 0; node < numberOfNodes; node++) 
+	this.adjacentList.put(node, new ArrayList<>());    
+  }	
+   
+  public void addEdge(int node1, int node2) {
+    this.adjacentList.get(node1).add(node2);
+    this.adjacentList.get(node2).add(node1);
+  } 
+
+}
+
+record DSU(int[] parent, int[] rank) {
+
+  public DSU(int numberOfNodes) {
+    this(new int[numberOfNodes], new int[numberOfNodes]);
+    for (int node = 0; node < numberOfNodes; node++) 
+	 parent[node] = node; // By default every node is the parent of itself.   
+  }	
+
+  public int findUltimateParent(int node) {
+     if (parent[node] != node) 
+         return findUltimateParent(parent[node]);
+     return node;
+  }  
+
+  public void makeUnion(int node1, int node2) {
+     int rootX = findUltimateParent(node1);
+     int rootY = findUltimateParent(node2);
+     if (rootX != rootY) {
+	 // NOTE - Parent nodes have higher rank as compared to child nodes.    
+         if (rank[rootX] > rank[rootY]) { // rootX is the parent of rootY.
+	     parent[rootY] = rootX; 
+	 } else if (rank[rootX] < rank[rootY]) { // rootY is the parent of rootX.
+	     parent[rootX] = rootY;
+	 } else { 
+	     // As both rootX and rootY have same rank, making rootX as the parent of rootY
+	     // by increasing the rank of rootX by 1. 
+	     rank[rootX]++; 
+	     parent[rootY] = rootX;
+	 }	 
+     }
+  }
+
+}
+
+public class DsuAlgo {
+ 
+  public static void main(String[] args) {
+
+    System.out.println("\n --- Disjoint Set Union --- \n");  
+
+    Scanner inputScanner = new Scanner(System.in);
+
+    System.out.print("Enter the number of nodes: ");
+    int numberOfNodes = inputScanner.nextInt();
+
+    SimpleGraph graph = new SimpleGraph(numberOfNodes); // Creating a new graph .....
+    DSU dsu = new DSU(numberOfNodes); // Creating DSU object ..... 
+
+    System.out.println("Add edges to the graph (Entering any negative number at any point of time will close the input.)::");
+    while (true) {
+       System.out.print("Enter [node_1, node_2]: ");
+       int node1 = inputScanner.nextInt();
+       if (node1 < 0) break;
+       int node2 = inputScanner.nextInt();
+       if (node2 < 0) break;
+       graph.addEdge(node1, node2); // Adding new edge to the graph .....
+    }
+    
+    inputScanner.close();
+    
+    // Forming Union for each and every node .....
+    for (int node = 0; node < numberOfNodes; node++) {
+        List<Integer> childNodeList = graph.adjacentList().get(node); 
+	for (int childNode : childNodeList)
+             dsu.makeUnion(node, childNode);		
+    }
+
+    System.out.println("Result::");
+    for (int node = 0; node < dsu.parent().length; node++)
+	 System.out.println("[Node: '" + node + "'; \t Ultimate Parent Node: '" + dsu.parent()[node] + "']");     
+    
+  }
+
+}
